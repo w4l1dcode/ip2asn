@@ -4,41 +4,40 @@ on:
   push:
     branches:
       - main
-      - master
   schedule:
-    - cron: '0 0 * * 1'  # Weekly run of the ip2asn extractor script
+    - cron: '0 0 * * 1'  # Weekly run every Monday
 
 jobs:
   ip2asn_run:
     runs-on: ubuntu-latest
     steps:
       # Step 1: Checkout the repository
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          persist-credentials: false
+          token: ${{ secrets.GITHUB_TOKEN }}  # Use GitHub's default token
 
-      # Step 2: Run the script
-      - name: Run script
+      # Step 2: Run the ip2asn script
+      - name: Run ip2asn extraction script
         run: |
           chmod +x ip2asn.sh
           ./ip2asn.sh
 
-      # Step 3: Configure Git and commit changes
-      - name: Commit and push changes
+      # Step 3: Configure Git for commit
+      - name: Configure Git
         run: |
-          # Configure Git
           git config --global user.email "walid.loutfi@outlook.com"
           git config --global user.name "w4l1dcode"
-
-          # Checkout the 'main' branch
-          git checkout main
-
-          # Commit the changes if there are any
+          
+      # Step 4: Checkout 'main' branch and make changes
+      - name: Checkout and Commit Changes
+        run: |
+          git checkout main  # Ensure we're on the correct branch
           git add ip2asn_data/ip2asn-v4.tsv
-          git commit -m "Updated ip2asn-v4.tsv" || echo "No changes to commit"
+          git commit -m "Updated ip2asn-v4.tsv"
 
-          # Push the changes to the 'main' branch
+      # Step 5: Push changes back to GitHub using a PAT
+      - name: Push changes to GitHub
+        run: |
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/w4l1dcode/ip2asn.git
           git push origin main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
