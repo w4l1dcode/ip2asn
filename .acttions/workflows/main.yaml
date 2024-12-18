@@ -1,0 +1,51 @@
+name: ip2asn_$(Build.BuildId)
+
+trigger:
+  branches:
+    include:
+      - main
+      - master
+
+schedules:
+  - cron: '0 0 * * 1'
+    displayName: 'Weekly run of the ip2asn extractor script'
+    branches:
+      include:
+        - main
+    always: true
+
+variables: 
+  - group: Github_PAT_ip2asn  # Link to your variable group
+
+stages:
+  - stage: run
+    displayName: Download + extract ip2asn mapping data
+    condition: ne(variables['Build.Reason'], 'PullRequest')
+    pool:
+      vmImage: ubuntu-latest
+    jobs:
+      - job: ip2asn_run
+        steps:
+          - checkout: self
+            persistCredentials: true
+
+          - script: |
+              chmod +x ip2asn.sh
+              ./ip2asn.sh
+            displayName: 'Run script'
+
+          - script: |
+              # Configure Git
+              git config --global user.email "walid.loutfi@outlook.com"
+              git config --global user.name "w4l1dcode"
+                  
+              # Checkout the 'main' branch
+              git checkout -B main
+           
+              # Commit the changes
+              git add ip2asn_data/ip2asn-v4.tsv
+              git commit -m "Updated ip2asn-v4.tsv"
+                  
+              # Push the changes to the 'main' branch
+              git push --set-upstream origin main
+            displayName: 'Push Changes to Git'
