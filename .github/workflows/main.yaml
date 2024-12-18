@@ -15,7 +15,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}  # Use GitHub's default token
+          token: ${{ secrets.GITHUB_TOKEN }}  # Use GitHub's default token for pulling the repository
 
       # Step 2: Run the ip2asn script
       - name: Run ip2asn extraction script
@@ -36,8 +36,8 @@ jobs:
           git add ip2asn_data/ip2asn-v4.tsv
           git commit -m "Updated ip2asn-v4.tsv"
 
-      # Step 5: Push changes back to GitHub using a PAT
+      # Step 5: Push changes to GitHub using the stored token 'ip2asn_auth'
       - name: Push changes to GitHub
         run: |
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/w4l1dcode/ip2asn.git
+          git remote set-url origin https://x-access-token:${{ secrets.ip2asn_auth }}@github.com/w4l1dcode/ip2asn.git
           git push origin main
