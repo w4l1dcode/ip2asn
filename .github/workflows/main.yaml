@@ -9,9 +9,7 @@ on:
     - cron: '0 0 * * 1'
       displayName: 'Weekly run of the ip2asn extractor script'
       branches:
-        include:
-          - main
-      always: true
+        - main
 
 jobs:
   run:
