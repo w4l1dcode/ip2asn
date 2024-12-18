@@ -36,8 +36,13 @@ jobs:
           git add ip2asn_data/ip2asn-v4.tsv
           git commit -m "Updated ip2asn-v4.tsv"
 
-      # Step 5: Push changes to GitHub using the stored token 'ip2asn_auth'
+      # Step 5: Authenticate using the personal access token 'ip2asn_auth'
+      - name: Setup Git authentication
+        run: |
+          git config --global url."https://x-access-token:${{ secrets.ip2asn_auth }}@github.com".insteadOf "https://github.com"
+      
+      # Step 6: Push changes to GitHub using the authenticated token
       - name: Push changes to GitHub
         run: |
-          git remote set-url origin https://x-access-token:${{ secrets.ip2asn_auth }}@github.com/w4l1dcode/ip2asn.git
           git push origin main
+
