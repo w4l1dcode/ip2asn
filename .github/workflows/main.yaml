@@ -6,8 +6,7 @@ on:
       - main
       - master
   schedule:
-    - cron: '0 0 * * 1'
-      displayName: 'Weekly run of the ip2asn extractor script'
+    - cron: '0 0 * * 1'  # Runs weekly on Mondays at midnight UTC
       branches:
         - main
 
@@ -15,6 +14,7 @@ jobs:
   run:
     name: Download + extract ip2asn mapping data
     runs-on: ubuntu-latest
+
     steps:
       # Checkout the repository
       - name: Checkout repository
@@ -27,10 +27,9 @@ jobs:
         run: |
           chmod +x ip2asn.sh
           ./ip2asn.sh
-        displayName: 'Run script'
 
       # Configure Git and commit changes
-      - name: GIT commit and push ip2asn-v4.tsv
+      - name: Commit and push ip2asn-v4.tsv
         env: 
           CI_COMMIT_MESSAGE: "Updated ip2asn-v4.tsv"
           CI_COMMIT_AUTHOR: "CI Bot"
@@ -47,4 +46,3 @@ jobs:
           
           # Push changes to the main branch
           git push
-        displayName: 'Commit and Push Changes to GitHub'
