@@ -1,51 +1,44 @@
 name: ip2asn_$(Build.BuildId)
 
-trigger:
-  branches:
-    include:
+on:
+  push:
+    branches:
       - main
       - master
+  schedule:
+    - cron: '0 0 * * 1'  # Weekly run of the ip2asn extractor script
 
-schedules:
-  - cron: '0 0 * * 1'
-    displayName: 'Weekly run of the ip2asn extractor script'
-    branches:
-      include:
-        - main
-    always: true
+jobs:
+  ip2asn_run:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
 
-variables: 
-  - group: Github_PAT_ip2asn  # Link to your variable group
+      # Step 2: Run the script
+      - name: Run script
+        run: |
+          chmod +x ip2asn.sh
+          ./ip2asn.sh
 
-stages:
-  - stage: run
-    displayName: Download + extract ip2asn mapping data
-    condition: ne(variables['Build.Reason'], 'PullRequest')
-    pool:
-      vmImage: ubuntu-latest
-    jobs:
-      - job: ip2asn_run
-        steps:
-          - checkout: self
-            persistCredentials: true
+      # Step 3: Configure Git and commit changes
+      - name: Commit and push changes
+        run: |
+          # Configure Git
+          git config --global user.email "walid.loutfi@outlook.com"
+          git config --global user.name "w4l1dcode"
 
-          - script: |
-              chmod +x ip2asn.sh
-              ./ip2asn.sh
-            displayName: 'Run script'
+          # Checkout the 'main' branch
+          git checkout main
 
-          - script: |
-              # Configure Git
-              git config --global user.email "walid.loutfi@outlook.com"
-              git config --global user.name "w4l1dcode"
-                  
-              # Checkout the 'main' branch
-              git checkout -B main
-           
-              # Commit the changes
-              git add ip2asn_data/ip2asn-v4.tsv
-              git commit -m "Updated ip2asn-v4.tsv"
-                  
-              # Push the changes to the 'main' branch
-              git push --set-upstream origin main
-            displayName: 'Push Changes to Git'
+          # Commit the changes if there are any
+          git add ip2asn_data/ip2asn-v4.tsv
+          git commit -m "Updated ip2asn-v4.tsv" || echo "No changes to commit"
+
+          # Push the changes to the 'main' branch
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
