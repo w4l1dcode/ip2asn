@@ -4,45 +4,49 @@ on:
   push:
     branches:
       - main
+      - master
   schedule:
-    - cron: '0 0 * * 1'  # Weekly run every Monday
+    - cron: '0 0 * * 1'
+      displayName: 'Weekly run of the ip2asn extractor script'
+      branches:
+        include:
+          - main
+      always: true
 
 jobs:
-  ip2asn_run:
+  run:
+    name: Download + extract ip2asn mapping data
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout the repository
+      # Checkout the repository
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}  # Use GitHub's default token for pulling the repository
+          persist-credentials: true
 
-      # Step 2: Run the ip2asn script
+      # Run the extraction script
       - name: Run ip2asn extraction script
         run: |
           chmod +x ip2asn.sh
           ./ip2asn.sh
+        displayName: 'Run script'
 
-      # Step 3: Configure Git for commit
-      - name: Configure Git
+      # Configure Git and commit changes
+      - name: GIT commit and push ip2asn-v4.tsv
+        env: 
+          CI_COMMIT_MESSAGE: "Updated ip2asn-v4.tsv"
+          CI_COMMIT_AUTHOR: "CI Bot"
         run: |
-          git config --global user.email "walid.loutfi@outlook.com"
-          git config --global user.name "w4l1dcode"
+          # Configure Git
+          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
+          git config --global user.email "username@users.noreply.github.com"
           
-      # Step 4: Checkout 'main' branch and make changes
-      - name: Checkout and Commit Changes
-        run: |
-          git checkout main  # Ensure we're on the correct branch
+          # Add the new file
           git add ip2asn_data/ip2asn-v4.tsv
-          git commit -m "Updated ip2asn-v4.tsv"
-
-      # Step 5: Authenticate using the personal access token 'ip2asn_auth'
-      - name: Setup Git authentication
-        run: |
-          git config --global url."https://x-access-token:${{ secrets.ip2asn_auth }}@github.com".insteadOf "https://github.com"
-      
-      # Step 6: Push changes to GitHub using the authenticated token
-      - name: Push changes to GitHub
-        run: |
-          git push origin main
-
+          
+          # Commit the changes
+          git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
+          
+          # Push changes to the main branch
+          git push
+        displayName: 'Commit and Push Changes to GitHub'
